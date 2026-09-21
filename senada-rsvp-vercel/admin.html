@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard RSVP — SENADA 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --onyx:#0a0806; --panel:#14100c; --panel2:#1b150d;
+    --gold:#cf9e4e; --gold-light:#f0d9a0; --cream:#f2ebdc; --muted:#a08e73;
+    --line:rgba(207,158,78,0.28); --ok:#7fc79a; --no:#e5978a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--onyx);color:var(--cream);font-family:'Jost',sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  button{font-family:inherit;cursor:pointer;}
+  .hidden{display:none !important;}
+
+  /* ---- login ---- */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .login-card{width:100%;max-width:380px;background:var(--panel);border:1px solid var(--line);padding:34px 28px;text-align:center;}
+  .login-card .kick{font-size:10.5px;letter-spacing:.26em;color:var(--gold);text-transform:uppercase;margin-bottom:10px;}
+  .login-card h1{font-family:'Playfair Display',serif;font-size:24px;margin-bottom:24px;}
+  .login-card input{width:100%;background:rgba(0,0,0,.38);border:1px solid var(--line);color:var(--cream);font:400 16px 'Jost',sans-serif;padding:14px;border-radius:2px;outline:none;margin-bottom:12px;}
+  .login-card input:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(207,158,78,.16);}
+  .btn{display:inline-block;padding:13px 22px;background:linear-gradient(180deg,var(--gold-light),var(--gold));color:#1c1206;border:0;border-radius:2px;font:600 13.5px 'Playfair Display',serif;letter-spacing:.06em;text-transform:uppercase;}
+  .btn.block{width:100%;}
+  .btn:disabled{opacity:.6;cursor:wait;}
+  .btn.ghost{background:transparent;color:var(--gold-light);border:1px solid var(--line);font-family:'Jost',sans-serif;font-weight:400;letter-spacing:.05em;text-transform:none;font-size:13px;padding:9px 14px;}
+  .btn.ghost:hover{border-color:var(--gold);}
+  .login-err{color:var(--no);font-size:13px;min-height:18px;margin-top:12px;}
+
+  /* ---- dashboard ---- */
+  .wrap{max-width:1240px;margin:0 auto;padding:22px 18px 60px;}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:22px;}
+  .top h1{font-family:'Playfair Display',serif;font-size:clamp(20px,4vw,26px);}
+  .top h1 small{display:block;font-family:'Jost',sans-serif;font-weight:300;font-size:11px;letter-spacing:.22em;color:var(--gold);text-transform:uppercase;margin-bottom:4px;}
+  .top-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .live{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 0 rgba(127,199,154,.6);animation:pulse 2s infinite;}
+  .live.off .dot{background:var(--no);animation:none;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(127,199,154,.55);}70%{box-shadow:0 0 0 8px rgba(127,199,154,0);}100%{box-shadow:0 0 0 0 rgba(127,199,154,0);}}
+
+  .stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin-bottom:22px;}
+  .stat{background:var(--panel);padding:18px 14px;text-align:center;}
+  .stat .n{font-family:'Playfair Display',serif;font-weight:700;font-size:clamp(24px,4vw,34px);line-height:1;}
+  .stat .l{margin-top:8px;font-size:10px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;}
+  .stat.ok .n{color:var(--ok);} .stat.no .n{color:var(--no);}
+  @media (max-width:900px){.stats{grid-template-columns:repeat(3,1fr);}}
+  @media (max-width:480px){.stats{grid-template-columns:repeat(2,1fr);}}
+
+  .tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .tools input[type=search]{flex:1 1 220px;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--cream);font:400 15px 'Jost',sans-serif;padding:11px 14px;border-radius:2px;outline:none;}
+  .tools input[type=search]:focus{border-color:var(--gold);}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--muted);padding:8px 13px;border-radius:99px;font-size:12.5px;}
+  .chip.on{background:rgba(207,158,78,.16);border-color:var(--gold);color:var(--cream);}
+  .count{font-size:12.5px;color:var(--muted);margin:0 2px 10px;}
+
+  .table-wrap{border:1px solid var(--line);background:var(--panel);overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  th{position:sticky;top:0;text-align:left;font-weight:400;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:13px 14px;border-bottom:1px solid var(--line);background:var(--panel);white-space:nowrap;}
+  td{padding:13px 14px;border-bottom:1px solid rgba(207,158,78,.12);vertical-align:top;}
+  tr:last-child td{border-bottom:0;}
+  td.nm{font-weight:500;}
+  td .sub{display:block;color:var(--muted);font-size:12.5px;margin-top:2px;font-weight:300;}
+  td a{color:var(--gold-light);text-decoration:none;border-bottom:1px dotted var(--gold);}
+  .badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;white-space:nowrap;border:1px solid var(--line);}
+  .badge.hadir{color:var(--ok);border-color:rgba(127,199,154,.5);background:rgba(127,199,154,.08);}
+  .badge.tidak{color:var(--no);border-color:rgba(229,151,138,.5);background:rgba(229,151,138,.08);}
+  .badge.vvip{color:var(--gold-light);border-color:var(--gold);}
+  .akses{max-width:260px;white-space:pre-wrap;word-break:break-word;}
+  .x{background:none;border:0;color:var(--muted);font-size:18px;line-height:1;padding:4px 8px;}
+  .x:hover{color:var(--no);}
+  tr.fresh td{animation:fresh 6s ease-out;}
+  @keyframes fresh{0%,40%{background:rgba(207,158,78,.22);}100%{background:transparent;}}
+  .empty{padding:44px 20px;text-align:center;color:var(--muted);font-size:14px;}
+
+  .toast-box{position:fixed;bottom:14px;right:14px;z-index:99;display:flex;flex-direction:column;gap:8px;max-width:calc(100vw - 28px);}
+  .toast{background:var(--panel2);border:1px solid var(--gold);color:var(--cream);padding:11px 16px;font-size:13.5px;border-radius:2px;box-shadow:0 12px 30px rgba(0,0,0,.5);animation:in .3s ease;}
+  @keyframes in{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* ---- mobile: tabel jadi kartu ---- */
+  @media (max-width:760px){
+    .table-wrap{border:0;background:transparent;overflow:visible;}
+    table,thead,tbody,tr,td{display:block;width:100%;}
+    thead{display:none;}
+    tr{background:var(--panel);border:1px solid var(--line);margin-bottom:12px;padding:6px 4px;}
+    td{border:0;padding:8px 14px;display:flex;justify-content:space-between;gap:16px;text-align:right;}
+    td::before{content:attr(data-label);flex:0 0 auto;text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding-top:2px;}
+    td.nm{font-size:16px;}
+    .akses{max-width:none;}
+    tr.fresh{animation:fresh 6s ease-out;}
+  }
+</style>
+</head>
+<body>
+
+<div class="login" id="login">
+  <form class="login-card" id="loginForm">
+    <div class="kick">SENADA 2026</div>
+    <h1>Dashboard Admin</h1>
+    <input type="password" id="pw" placeholder="Password admin" autocomplete="current-password" required>
+    <button class="btn block" id="loginBtn" type="submit">Masuk</button>
+    <div class="login-err" id="loginErr"></div>
+  </form>
+</div>
+
+<div class="wrap hidden" id="app">
+  <div class="top">
+    <h1><small>SENADA 2026</small>Konfirmasi Kehadiran</h1>
+    <div class="top-r">
+      <span class="live" id="live"><span class="dot"></span><span id="liveTxt">Menghubungkan…</span></span>
+      <button class="btn ghost" id="csvBtn" type="button">Unduh CSV</button>
+      <button class="btn ghost" id="logoutBtn" type="button">Keluar</button>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="tools">
+    <input type="search" id="q" placeholder="Cari nama, instansi, email, nomor…">
+    <div class="chips" id="chips"></div>
+  </div>
+  <div class="count" id="count"></div>
+
+  <div class="table-wrap">
+    <table>
+      <thead><tr>
+        <th>Waktu</th><th>Nama</th><th>Kategori</th><th>Kehadiran</th><th>Kontak</th><th>Aksesibilitas</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="empty hidden" id="empty">Belum ada data yang cocok.</div>
+  </div>
+</div>
+
+<div class="toast-box" id="toasts"></div>
+
+<script>
+(function(){
+  var POLL_MS = 3000;
+  var TOKEN_KEY = 'senada_admin_pw';
+  var pw = sessionStorage.getItem(TOKEN_KEY) || '';
+  var items = [];
+  var known = {};          // id -> updatedAt
+  var firstLoad = true;
+  var fresh = {};          // id -> timestamp (untuk highlight)
+  var filter = 'all';
+  var timer = null;
+  var busy = false;
+  var lastSig = null;
+
+  var $ = function(id){ return document.getElementById(id); };
+  function el(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text != null) e.textContent = text; return e; }
+
+  /* ---------- auth ---------- */
+  $('loginForm').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    pw = $('pw').value;
+    $('loginBtn').disabled = true; $('loginErr').textContent = '';
+    load(true).then(function(ok){ $('loginBtn').disabled = false; if(ok) $('pw').value = ''; });
+  });
+  $('logoutBtn').addEventListener('click', function(){
+    sessionStorage.removeItem(TOKEN_KEY); pw = ''; stop();
+    items = []; known = {}; firstLoad = true; lastSig = null;
+    $('app').classList.add('hidden'); $('login').classList.remove('hidden');
+  });
+
+  function api(path, opts){
+    opts = opts || {}; opts.headers = Object.assign({'Authorization':'Bearer '+pw}, opts.headers || {});
+    opts.cache = 'no-store';
+    return fetch(path, opts);
+  }
+
+  /* ---------- polling ---------- */
+  function load(isLogin){
+    if(busy) return Promise.resolve(true);
+    busy = true;
+    return api('/api/admin').then(function(r){
+      return r.json().catch(function(){ return {}; }).then(function(j){ return {r:r, j:j}; });
+    }).then(function(x){
+      busy = false;
+      if(x.r.status === 401){
+        stop(); sessionStorage.removeItem(TOKEN_KEY);
+        $('app').classList.add('hidden'); $('login').classList.remove('hidden');
+        $('loginErr').textContent = isLogin ? 'Password salah.' : 'Sesi berakhir, silakan masuk lagi.';
+        return false;
+      }
+      if(!x.r.ok){
+        if(isLogin){ $('loginErr').textContent = (x.j && x.j.error) || 'Terjadi gangguan.'; return false; }
+        setLive(false, (x.j && x.j.error) || 'Gangguan server'); return true;
+      }
+      if(isLogin){
+        sessionStorage.setItem(TOKEN_KEY, pw);
+        $('login').classList.add('hidden'); $('app').classList.remove('hidden');
+        start();
+      }
+      ingest(x.j.items || []);
+      setLive(true);
+      return true;
+    }).catch(function(){
+      busy = false;
+      if(isLogin){ $('loginErr').textContent = 'Tidak dapat terhubung ke server.'; return false; }
+      setLive(false, 'Terputus — mencoba lagi…'); return true;
+    });
+  }
+  function start(){ stop(); timer = setInterval(function(){ if(!document.hidden) load(false); }, POLL_MS); }
+  function stop(){ if(timer){ clearInterval(timer); timer = null; } }
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden && pw && timer) load(false); });
+
+  function setLive(ok, msg){
+    $('live').classList.toggle('off', !ok);
+    $('liveTxt').textContent = ok ? 'Live · diperbarui ' + new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit',second:'2-digit'}) : msg;
+  }
+
+  function ingest(list){
+    var now = Date.now();
+    if(!firstLoad){
+      list.forEach(function(it){
+        if(known[it.id] !== it.updatedAt){
+          fresh[it.id] = now;
+          toast((known[it.id] ? 'Diperbarui: ' : 'RSVP baru: ') + it.nama + ' — ' + it.status);
+        }
+      });
+    }
+    known = {}; list.forEach(function(it){ known[it.id] = it.updatedAt; });
+    var sig = list.map(function(i){ return i.id + '@' + i.updatedAt; }).join('|');
+    var changed = sig !== lastSig;
+    lastSig = sig; items = list; firstLoad = false;
+    if(changed) render();   // jangan render ulang kalau tidak ada perubahan (biar animasi tidak restart)
+  }
+
+  function toast(msg){
+    var t = el('div','toast',msg); $('toasts').appendChild(t);
+    setTimeout(function(){ t.remove(); }, 5000);
+  }
+
+  /* ---------- render ---------- */
+  var CHIPS = [
+    ['all','Semua'], ['Hadir','Hadir'], ['Tidak dapat hadir','Tidak hadir'],
+    ['Tamu VVIP','VVIP'], ['Media Pers','Media Pers'], ['akses','Butuh aksesibilitas']
+  ];
+  function buildChips(){
+    var box = $('chips'); box.textContent = '';
+    CHIPS.forEach(function(c){
+      var b = el('button','chip'+(filter===c[0]?' on':''),c[1]); b.type = 'button';
+      b.addEventListener('click', function(){ filter = c[0]; buildChips(); render(); });
+      box.appendChild(b);
+    });
+  }
+
+  function fmtTime(iso){
+    try{
+      return new Date(iso).toLocaleString('id-ID',{timeZone:'Asia/Jakarta',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}).replace(/\./g,':');
+    }catch(e){ return iso; }
+  }
+  function waLink(n){
+    var d = String(n).replace(/\D/g,'');
+    if(d.charAt(0) === '0') d = '62' + d.slice(1);
+    return 'https://wa.me/' + d;
+  }
+
+  function matches(it){
+    if(filter === 'Hadir' || filter === 'Tidak dapat hadir'){ if(it.status !== filter) return false; }
+    else if(filter === 'Tamu VVIP' || filter === 'Media Pers'){ if(it.kategori !== filter) return false; }
+    else if(filter === 'akses'){ if(!it.akses) return false; }
+    var q = $('q').value.trim().toLowerCase();
+    if(q){
+      var hay = [it.nama,it.instansi,it.email,it.wa,it.akses,it.kategori].join(' ').toLowerCase();
+      if(hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  }
+
+  function renderStats(){
+    var hadir = items.filter(function(i){return i.status==='Hadir';});
+    var stats = [
+      ['Total respons', items.length, ''],
+      ['Hadir', hadir.length, 'ok'],
+      ['Tidak hadir', items.length - hadir.length, 'no'],
+      ['VVIP hadir', hadir.filter(function(i){return i.kategori==='Tamu VVIP';}).length, ''],
+      ['Pers hadir', hadir.filter(function(i){return i.kategori==='Media Pers';}).length, ''],
+      ['Butuh akses', hadir.filter(function(i){return !!i.akses;}).length, '']
+    ];
+    var box = $('stats'); box.textContent = '';
+    stats.forEach(function(s){
+      var d = el('div','stat '+s[2]); d.appendChild(el('div','n',String(s[1]))); d.appendChild(el('div','l',s[0])); box.appendChild(d);
+    });
+  }
+
+  function td(label, cls){ var c = el('td', cls||''); c.setAttribute('data-label', label); return c; }
+
+  function render(){
+    renderStats();
+    var list = items.filter(matches);
+    $('count').textContent = 'Menampilkan ' + list.length + ' dari ' + items.length + ' data';
+    var body = $('rows'); body.textContent = '';
+    $('empty').classList.toggle('hidden', list.length > 0);
+    var now = Date.now();
+    list.forEach(function(it){
+      var tr = el('tr', fresh[it.id] && now - fresh[it.id] < 6000 ? 'fresh' : '');
+
+      var c1 = td('Waktu'); c1.textContent = fmtTime(it.updatedAt); tr.appendChild(c1);
+
+      var c2 = td('Nama','nm'); c2.appendChild(document.createTextNode(it.nama));
+      c2.appendChild(el('span','sub',it.instansi)); tr.appendChild(c2);
+
+      var c3 = td('Kategori'); c3.appendChild(el('span','badge'+(it.kategori==='Tamu VVIP'?' vvip':''),it.kategori)); tr.appendChild(c3);
+
+      var c4 = td('Kehadiran'); c4.appendChild(el('span','badge '+(it.status==='Hadir'?'hadir':'tidak'),it.status)); tr.appendChild(c4);
+
+      var c5 = td('Kontak');
+      var a = el('a',null,it.wa); a.href = waLink(it.wa); a.target = '_blank'; a.rel = 'noopener';
+      var box = el('div'); box.appendChild(a); box.appendChild(el('span','sub',it.email)); c5.appendChild(box); tr.appendChild(c5);
+
+      var c6 = td('Aksesibilitas','akses'); c6.textContent = it.akses || '—'; tr.appendChild(c6);
+
+      var c7 = td('Hapus'); var x = el('button','x','✕'); x.type = 'button'; x.title = 'Hapus data ini';
+      x.addEventListener('click', function(){ del(it); }); c7.appendChild(x); tr.appendChild(c7);
+
+      body.appendChild(tr);
+    });
+  }
+
+  function del(it){
+    if(!confirm('Hapus data "' + it.nama + '"? Tindakan ini tidak bisa dibatalkan.')) return;
+    api('/api/admin?id=' + encodeURIComponent(it.id), {method:'DELETE'}).then(function(r){
+      if(r.ok){ items = items.filter(function(i){return i.id !== it.id;}); delete known[it.id]; render(); }
+      else toast('Gagal menghapus data.');
+    }).catch(function(){ toast('Gagal menghapus data.'); });
+  }
+
+  /* ---------- CSV ---------- */
+  function csvCell(v){
+    v = String(v == null ? '' : v);
+    if(/^[=+\-@\t\r]/.test(v)) v = "'" + v;   // cegah formula injection di Excel
+    return '"' + v.replace(/"/g,'""') + '"';
+  }
+  $('csvBtn').addEventListener('click', function(){
+    var head = ['Waktu Kirim','Nama Lengkap','Instansi/Organisasi/Komunitas','Kategori Undangan','Konfirmasi Kehadiran','WhatsApp','Email','Kebutuhan Aksesibilitas'];
+    var rows = items.slice().sort(function(a,b){ return String(a.createdAt).localeCompare(String(b.createdAt)); }).map(function(i){
+      return [fmtTime(i.createdAt),i.nama,i.instansi,i.kategori,i.status,i.wa,i.email,i.akses].map(csvCell).join(',');
+    });
+    var csv = '\uFEFF' + [head.map(csvCell).join(',')].concat(rows).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+    var d = new Date(); a.download = 'senada2026-rsvp-' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  });
+
+  $('q').addEventListener('input', render);
+  buildChips();
+
+  // auto-login jika sesi masih ada
+  if(pw){ load(true); }
+})();
+</script>
+</body>
+</html>
